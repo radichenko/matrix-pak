@@ -1,0 +1,175 @@
+/* ═══════════════════════════════════════════════════════════
+   light-theme.css — Світла тема застосунку matrix-pak
+   ═══════════════════════════════════════════════════════════ */
+
+/* Коренева панель — білий фон */
+.root {
+    -fx-base:                   #f0f0f0;
+    -fx-background:             #ffffff;
+    -fx-control-inner-background: #ffffff;
+    -fx-font-family:            "Segoe UI", "Arial", sans-serif;
+    -fx-font-size:              13px;
+}
+
+/* ── Меню ── */
+.menu-bar {
+    -fx-background-color: #e8e8e8;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 0 0 1 0;
+}
+
+.menu-bar .menu-button:hover,
+.menu-bar .menu-button:focused,
+.menu-bar .menu-button:showing {
+    -fx-background-color: #d0d0d0;
+}
+
+/* ── Вкладки ── */
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: #e4e4e4;
+}
+
+.tab {
+    -fx-background-color: #d8d8d8;
+    -fx-padding: 6 14 6 14;
+}
+
+.tab:selected {
+    -fx-background-color: #ffffff;
+}
+
+.tab .tab-label {
+    -fx-font-weight: bold;
+}
+
+/* ── Кнопки ── */
+.button {
+    -fx-background-color: #4a90d9;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 4;
+    -fx-padding: 6 14 6 14;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #3578c0;
+}
+
+.button:pressed {
+    -fx-background-color: #2a60a0;
+}
+
+.button.secondary {
+    -fx-background-color: #888888;
+}
+
+.button.secondary:hover {
+    -fx-background-color: #666666;
+}
+
+.button.danger {
+    -fx-background-color: #d9534f;
+}
+
+.button.danger:hover {
+    -fx-background-color: #c9302c;
+}
+
+/* ── TitledPane ── */
+.titled-pane > .title {
+    -fx-background-color: #e8e8e8;
+    -fx-font-weight: bold;
+}
+
+/* ── TableView ── */
+.table-view {
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 3;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #e8e8e8;
+}
+
+.table-view .column-header .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #f9f9f9;
+}
+
+.table-row-cell:even {
+    -fx-background-color: #ffffff;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #cce5ff;
+}
+
+/* ── ProgressBar ── */
+.progress-bar > .bar {
+    -fx-background-color: #4a90d9;
+    -fx-background-radius: 3;
+}
+
+.progress-bar > .track {
+    -fx-background-color: #dce8f5;
+    -fx-background-radius: 3;
+}
+
+/* ── Рядок статусу ── */
+.status-bar {
+    -fx-background-color: #e4e4e4;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1 0 0 0;
+}
+
+.status-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+}
+
+/* ── Журнал (TextArea) ── */
+.log-area {
+    -fx-font-family: "Courier New", "Consolas", monospace;
+    -fx-font-size: 12px;
+    -fx-control-inner-background: #f8f8f8;
+    -fx-text-fill: #222222;
+}
+
+/* ── LineChart ── */
+.chart-plot-background {
+    -fx-background-color: #fafafa;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: #dddddd;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: #dddddd;
+}
+
+/* ── Slider ── */
+.slider .track {
+    -fx-background-color: #cccccc;
+}
+
+.slider .thumb {
+    -fx-background-color: #4a90d9;
+}
+
+/* ── TextField / Spinner ── */
+.text-field,
+.spinner .text-field {
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.text-field:focused,
+.spinner .text-field:focused {
+    -fx-border-color: #4a90d9;
+}

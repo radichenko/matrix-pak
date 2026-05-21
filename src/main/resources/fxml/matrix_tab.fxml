@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.ui.controller.MatrixTabController">
+
+    <center>
+        <VBox alignment="CENTER" spacing="16">
+            <padding><Insets top="40"/></padding>
+            <Label text="🔢  Вкладка «Матриці»"
+                   style="-fx-font-size: 18; -fx-font-weight: bold;"/>
+            <Label text="Буде реалізовано у Фазі 8."
+                   style="-fx-font-size: 13; -fx-text-fill: #888;"/>
+        </VBox>
+    </center>
+
+</BorderPane>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.ui.controller.MainController">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TOP: Рядок меню
+         ═══════════════════════════════════════════════════════════ -->
+    <top>
+        <MenuBar fx:id="menuBar" useSystemMenuBar="false">
+
+            <!-- Меню: Файл -->
+            <Menu text="Файл">
+                <MenuItem text="Вийти" onAction="#onExit"/>
+            </Menu>
+
+            <!-- Меню: Вигляд -->
+            <Menu text="Вигляд">
+                <MenuItem text="Світла тема" onAction="#onLightTheme"/>
+                <MenuItem text="Темна тема"  onAction="#onDarkTheme"/>
+            </Menu>
+
+            <!-- Меню: Довідка -->
+            <Menu text="Довідка">
+                <MenuItem text="Про програму" onAction="#onAbout"/>
+            </Menu>
+
+        </MenuBar>
+    </top>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CENTER: Головна панель вкладок
+         ═══════════════════════════════════════════════════════════ -->
+    <center>
+        <TabPane fx:id="mainTabPane"
+                 tabClosingPolicy="UNAVAILABLE"
+                 tabMinWidth="130">
+
+            <!-- Вкладка 1: Обчислення -->
+            <Tab text="⚙  Обчислення">
+                <fx:include source="compute_tab.fxml"/>
+            </Tab>
+
+            <!-- Вкладка 2: Бенчмарк -->
+            <Tab text="📊  Бенчмарк">
+                <fx:include source="benchmark_tab.fxml"/>
+            </Tab>
+
+            <!-- Вкладка 3: Матриці -->
+            <Tab text="🔢  Матриці">
+                <fx:include source="matrix_tab.fxml"/>
+            </Tab>
+
+            <!-- Вкладка 4: Журнал -->
+            <Tab text="📋  Журнал">
+                <fx:include source="log_tab.fxml"/>
+            </Tab>
+
+        </TabPane>
+    </center>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         BOTTOM: Рядок статусу
+         ═══════════════════════════════════════════════════════════ -->
+    <bottom>
+        <HBox styleClass="status-bar" alignment="CENTER_LEFT" spacing="8">
+            <padding>
+                <Insets top="4" right="12" bottom="4" left="12"/>
+            </padding>
+            <Label fx:id="statusBar" text="Готовий." styleClass="status-label"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

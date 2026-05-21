@@ -1,0 +1,292 @@
+/* ═══════════════════════════════════════════════════════════
+   dark-theme.css — Темна тема застосунку matrix-pak
+   ═══════════════════════════════════════════════════════════ */
+
+/* Коренева панель — темний фон */
+.root {
+    -fx-base:                   #2b2b2b;
+    -fx-background:             #1e1e1e;
+    -fx-control-inner-background: #3c3c3c;
+    -fx-text-fill:              #f0f0f0;
+    -fx-font-family:            "Segoe UI", "Arial", sans-serif;
+    -fx-font-size:              13px;
+}
+
+/* ── Меню ── */
+.menu-bar {
+    -fx-background-color: #2b2b2b;
+    -fx-border-color: #444444;
+    -fx-border-width: 0 0 1 0;
+}
+
+.menu-bar .menu-button > .label {
+    -fx-text-fill: #f0f0f0;
+}
+
+.menu-bar .menu-button:hover,
+.menu-bar .menu-button:focused,
+.menu-bar .menu-button:showing {
+    -fx-background-color: #3c3c3c;
+}
+
+.context-menu {
+    -fx-background-color: #2b2b2b;
+    -fx-border-color: #555555;
+}
+
+.menu-item:hover,
+.menu-item:focused {
+    -fx-background-color: #4d9de0;
+}
+
+.menu-item .label {
+    -fx-text-fill: #f0f0f0;
+}
+
+/* ── Вкладки ── */
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: #252525;
+}
+
+.tab {
+    -fx-background-color: #333333;
+    -fx-padding: 6 14 6 14;
+}
+
+.tab:selected {
+    -fx-background-color: #1e1e1e;
+}
+
+.tab .tab-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #cccccc;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: #f0f0f0;
+}
+
+/* ── Кнопки ── */
+.button {
+    -fx-background-color: #4d9de0;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 4;
+    -fx-padding: 6 14 6 14;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #3d85c8;
+}
+
+.button:pressed {
+    -fx-background-color: #2d6daa;
+}
+
+.button.secondary {
+    -fx-background-color: #555555;
+}
+
+.button.secondary:hover {
+    -fx-background-color: #444444;
+}
+
+.button.danger {
+    -fx-background-color: #c0392b;
+}
+
+.button.danger:hover {
+    -fx-background-color: #a93226;
+}
+
+/* ── TitledPane ── */
+.titled-pane > .title {
+    -fx-background-color: #333333;
+    -fx-font-weight: bold;
+}
+
+.titled-pane > .title > .text {
+    -fx-fill: #f0f0f0;
+}
+
+/* ── TableView ── */
+.table-view {
+    -fx-background-color: #2b2b2b;
+    -fx-border-color: #444444;
+    -fx-border-radius: 3;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #333333;
+}
+
+.table-view .column-header .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #cccccc;
+}
+
+.table-row-cell {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #f0f0f0;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #2b2b2b;
+}
+
+.table-row-cell:even {
+    -fx-background-color: #333333;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #1a5276;
+}
+
+.table-cell {
+    -fx-text-fill: #f0f0f0;
+}
+
+/* ── ProgressBar ── */
+.progress-bar > .bar {
+    -fx-background-color: #4d9de0;
+    -fx-background-radius: 3;
+}
+
+.progress-bar > .track {
+    -fx-background-color: #3c3c3c;
+    -fx-background-radius: 3;
+}
+
+/* ── Рядок статусу ── */
+.status-bar {
+    -fx-background-color: #252525;
+    -fx-border-color: #444444;
+    -fx-border-width: 1 0 0 0;
+}
+
+.status-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #aaaaaa;
+}
+
+/* ── Журнал (TextArea) — зелений на темному, як термінал ── */
+.log-area {
+    -fx-font-family: "Courier New", "Consolas", monospace;
+    -fx-font-size: 12px;
+    -fx-control-inner-background: #1e1e1e;
+    -fx-text-fill: #a8ff78;
+}
+
+/* ── LineChart ── */
+.chart {
+    -fx-background-color: #1e1e1e;
+}
+
+.chart-plot-background {
+    -fx-background-color: #252525;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: #3a3a3a;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: #3a3a3a;
+}
+
+.chart-title {
+    -fx-text-fill: #f0f0f0;
+}
+
+.axis-label {
+    -fx-text-fill: #cccccc;
+}
+
+.axis {
+    -fx-tick-label-fill: #cccccc;
+}
+
+/* ── Slider ── */
+.slider .track {
+    -fx-background-color: #555555;
+}
+
+.slider .thumb {
+    -fx-background-color: #4d9de0;
+}
+
+/* ── TextField / Spinner / Label ── */
+.text-field,
+.spinner .text-field {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #f0f0f0;
+    -fx-border-color: #555555;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.text-field:focused,
+.spinner .text-field:focused {
+    -fx-border-color: #4d9de0;
+}
+
+.label {
+    -fx-text-fill: #f0f0f0;
+}
+
+.check-box .text {
+    -fx-text-fill: #f0f0f0;
+}
+
+.radio-button .text {
+    -fx-text-fill: #f0f0f0;
+}
+
+/* ── ComboBox ── */
+.combo-box {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+    -fx-border-radius: 3;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #f0f0f0;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: #2b2b2b;
+    -fx-border-color: #555555;
+}
+
+.combo-box-popup .list-cell:hover {
+    -fx-background-color: #4d9de0;
+}
+
+/* ── SplitPane ── */
+.split-pane {
+    -fx-background-color: #1e1e1e;
+}
+
+.split-pane-divider {
+    -fx-background-color: #444444;
+    -fx-padding: 0 1 0 1;
+}
+
+/* ── ScrollPane ── */
+.scroll-pane {
+    -fx-background-color: #1e1e1e;
+}
+
+.scroll-bar {
+    -fx-background-color: #2b2b2b;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #555555;
+    -fx-background-radius: 3;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #4d9de0;
+}
