@@ -1,5 +1,6 @@
 package org.example.prg;
 
+import org.example.service.LogService;
 import org.example.utils.SyncUtils;
 
 import java.util.concurrent.CountDownLatch;
@@ -17,31 +18,24 @@ import java.util.concurrent.CountDownLatch;
  * <pre>
  * Фаза 1 — обчислення проміжної матриці MT:
  *   for j ∈ [colStart, colEnd):
- *     for i ∈ [0, N):
- *       MT[i][j] = Σ_k ( MC[i][k] * MD[k][j] )
+ *     MT[i][j] = Σ_k ( MC[i][k] * MD[k][j] )   для всіх i
  *
- * → countDown(d1)   // сигнал: моя частина MT готова
- * → await(d1)       // чекаємо поки всі потоки завершать фазу 1
+ * → signal(d1)   // сигнал: моя частина MT готова
+ * → await(d1)    // чекаємо поки всі потоки завершать фазу 1
  *
  * Фаза 2 — обчислення результуючої матриці MA:
  *   for j ∈ [colStart, colEnd):
- *     for i ∈ [0, N):
- *       MA[i][j] = Σ_k ( MB[i][k] * MT[k][j] )
+ *     MA[i][j] = Σ_k ( MB[i][k] * MT[k][j] )   для всіх i
  *
- * → countDown(d2)   // сигнал: моя частина MA готова
+ * → signal(d2)   // сигнал: робота завершена
  * </pre>
  *
- * <p>Бар'єр d1 між фазами забезпечує коректність: хоча кожен потік
- * використовує лише власні стовпці MT, явна синхронізація відображає
- * структуру формули MA = MB × (MC × MD) і відповідає схемі взаємодії
- * потоків з розділу 3.3 дипломної роботи.
- *
- * <p>Критичних ділянок немає — кожен потік пише лише у власний
- * діапазон стовпців матриць MT та MA.
+ * <p>Критичних ділянок немає — кожен потік пише виключно
+ * у свій діапазон стовпців MT та MA.
  */
 public class PRG1WorkerThread extends Thread {
 
-    // ─── Ідентифікатор потоку (для журналювання, 0-based) ────────
+    // ─── Ідентифікатор потоку (0-based, для журналювання) ────────
     private final int threadId;
 
     // ─── Діапазон стовпців цього потоку ──────────────────────────
@@ -49,30 +43,23 @@ public class PRG1WorkerThread extends Thread {
     private final int colEnd;
 
     // ─── Вхідні матриці (тільки читання) ─────────────────────────
-    private final double[][] MB;   // множник зліва (N×N)
-    private final double[][] MC;   // внутрішній лівий (N×N)
-    private final double[][] MD;   // внутрішній правий (N×N)
+    private final double[][] MB;
+    private final double[][] MC;
+    private final double[][] MD;
 
     // ─── Матриці для запису ───────────────────────────────────────
-    private final double[][] MT;   // проміжна: MT = MC × MD (N×N)
-    private final double[][] MA;   // результат: MA = MB × MT (N×N)
+    private final double[][] MT;   // проміжна: MT = MC × MD (спільна)
+    private final double[][] MA;   // результат: MA = MB × MT (спільна)
 
     // ─── Розмір квадратних матриць ────────────────────────────────
     private final int N;
 
-    // ─── Лічильники синхронізації ─────────────────────────────────
-    /**
-     * d1 — бар'єр після фази 1 (обчислення MT).
-     * Кожен потік робить countDown після завершення своїх стовпців MT,
-     * потім чекає поки всі інші також завершать.
-     */
+    // ─── Примітиви синхронізації ──────────────────────────────────
     private final CountDownLatch d1;
-
-    /**
-     * d2 — бар'єр після фази 2 (обчислення MA).
-     * Після countDown головний потік (T1) отримує сигнал про завершення.
-     */
     private final CountDownLatch d2;
+
+    // ─── Журналювання ─────────────────────────────────────────────
+    private final LogService log;
 
     // ─────────────────────────────────────────────────────────────
     //  Конструктор
@@ -81,24 +68,24 @@ public class PRG1WorkerThread extends Thread {
     /**
      * Створює робочий потік ПРГ1.
      *
-     * @param threadId  порядковий номер потоку (0-based, для логування)
+     * @param threadId  порядковий номер потоку (0-based)
      * @param colStart  перший стовпець діапазону (включно)
      * @param colEnd    перший стовпець після діапазону (виключно)
      * @param N         розмір квадратних матриць
-     * @param MB        вхідна матриця MB (N×N)
-     * @param MC        вхідна матриця MC (N×N)
-     * @param MD        вхідна матриця MD (N×N)
-     * @param MT        проміжна матриця MT (N×N), спільна для всіх потоків
-     * @param MA        результуюча матриця MA (N×N), спільна для всіх потоків
-     * @param d1        CountDownLatch(P) — синхронізація після фази 1
-     * @param d2        CountDownLatch(P) — синхронізація після фази 2
+     * @param MB        вхідна матриця MB (тільки читання)
+     * @param MC        вхідна матриця MC (тільки читання)
+     * @param MD        вхідна матриця MD (тільки читання)
+     * @param MT        проміжна матриця MT (спільна, запис у свій діапазон)
+     * @param MA        результуюча матриця MA (спільна, запис у свій діапазон)
+     * @param d1        бар'єр після фази 1 (CountDownLatch(P))
+     * @param d2        бар'єр після фази 2 (CountDownLatch(P))
      */
     public PRG1WorkerThread(int threadId, int colStart, int colEnd,
                             int N,
                             double[][] MB, double[][] MC, double[][] MD,
                             double[][] MT, double[][] MA,
                             CountDownLatch d1, CountDownLatch d2) {
-        super("PRG1-Worker-" + threadId);
+        super("PRG1-T" + (threadId + 1));
         this.threadId = threadId;
         this.colStart = colStart;
         this.colEnd   = colEnd;
@@ -110,21 +97,25 @@ public class PRG1WorkerThread extends Thread {
         this.MA = MA;
         this.d1 = d1;
         this.d2 = d2;
+        this.log = LogService.getInstance();
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Головна логіка потоку
+    //  Логіка потоку
     // ─────────────────────────────────────────────────────────────
 
     @Override
     public void run() {
 
+        log.debug(String.format("  ПРГ1 | T%d СТАРТ | стовпці [%d, %d) | %d стовп.",
+                threadId + 1, colStart, colEnd, colEnd - colStart));
+
         // ══════════════════════════════════════════════════════════
         //  ФАЗА 1: MT[:,j] = MC × MD[:,j]   для j ∈ [colStart, colEnd)
         //
-        //  Обчислення ведеться у порядку i-k-j для оптимального
-        //  використання кешу (рядок MC[i] залишається «гарячим»
-        //  протягом внутрішнього циклу по k).
+        //  Порядок циклів j→i→k: зовнішній цикл по стовпцях,
+        //  внутрішній по рядках — рядок MC[i] залишається "гарячим"
+        //  у кеші L1 протягом усього внутрішнього циклу по k.
         // ══════════════════════════════════════════════════════════
 
         for (int j = colStart; j < colEnd; j++) {
@@ -137,18 +128,18 @@ public class PRG1WorkerThread extends Thread {
             }
         }
 
-        // Сигналізуємо: моя частина MT готова
-        SyncUtils.signal(d1);
+        log.debug(String.format("  ПРГ1 | T%d фаза 1 завершена (MT готова)", threadId + 1));
 
-        // Чекаємо поки всі потоки завершать фазу 1
-        // (необхідно оскільки MA = MB × MT вимагає повної MT)
+        // Сигналізуємо та чекаємо: всі потоки мають завершити фазу 1
+        // перед початком фази 2, оскільки MA = MB × MT вимагає повної MT.
+        SyncUtils.signal(d1);
         SyncUtils.awaitLatch(d1);
 
         // ══════════════════════════════════════════════════════════
         //  ФАЗА 2: MA[:,j] = MB × MT[:,j]   для j ∈ [colStart, colEnd)
         //
-        //  Аналогічна структура циклу. Читаємо з MT (вже повної),
-        //  пишемо у MA — лише у власний діапазон стовпців.
+        //  Аналогічна структура. Читаємо з повної MT (фаза 1 завершена
+        //  для всіх потоків), пишемо у MA лише у свій діапазон.
         // ══════════════════════════════════════════════════════════
 
         for (int j = colStart; j < colEnd; j++) {
@@ -161,20 +152,17 @@ public class PRG1WorkerThread extends Thread {
             }
         }
 
-        // Сигналізуємо: моя частина MA готова — робота завершена
+        log.debug(String.format("  ПРГ1 | T%d фаза 2 завершена (MA готова)", threadId + 1));
+
+        // Сигналізуємо головному потоку T1: робота завершена
         SyncUtils.signal(d2);
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Гетери (для журналювання у Фазі 3б)
+    //  Гетери
     // ─────────────────────────────────────────────────────────────
 
-    /** @return порядковий номер потоку (0-based) */
     public int getThreadId() { return threadId; }
-
-    /** @return індекс першого стовпця діапазону (включно) */
-    public int getColStart() { return colStart; }
-
-    /** @return індекс після останнього стовпця діапазону (виключно) */
-    public int getColEnd() { return colEnd; }
+    public int getColStart()  { return colStart; }
+    public int getColEnd()    { return colEnd; }
 }
