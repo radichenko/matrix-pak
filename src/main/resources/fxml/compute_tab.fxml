@@ -3,7 +3,6 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -11,64 +10,73 @@
             styleClass="tab-content">
 
     <!-- ═══════════════════════════════════════════════════════════
-         CENTER — головна область з прокруткою
+         CENTER
          ═══════════════════════════════════════════════════════════ -->
     <center>
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="edge-to-edge">
-            <VBox spacing="14">
-                <padding><Insets top="16" right="18" bottom="16" left="18"/></padding>
+            <VBox spacing="12">
+                <padding><Insets top="14" right="16" bottom="14" left="16"/></padding>
 
                 <!-- ── Блок 1: Параметри ─────────────────────────── -->
                 <TitledPane text="Параметри обчислення" collapsible="false"
                             styleClass="section-pane">
-                    <GridPane hgap="16" vgap="10">
+                    <GridPane hgap="14" vgap="10">
                         <padding><Insets top="12" right="14" bottom="12" left="14"/></padding>
-
-                        <!-- Колонки -->
                         <columnConstraints>
-                            <ColumnConstraints minWidth="130" maxWidth="160"/>
+                            <ColumnConstraints minWidth="140" maxWidth="160"/>
                             <ColumnConstraints hgrow="ALWAYS"/>
                         </columnConstraints>
 
-                        <!-- Рядок 0: Програма -->
+                        <!-- Рядок 0: Вибір програми -->
                         <Label text="Програма:" styleClass="param-label"
                                GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-                        <HBox spacing="10" alignment="CENTER_LEFT"
+                        <HBox spacing="16" alignment="CENTER_LEFT"
                               GridPane.rowIndex="0" GridPane.columnIndex="1">
-                            <RadioButton fx:id="radioPRG1" text="ПРГ1  MA = MB × (MC × MD)"
+                            <RadioButton fx:id="radioPRG1"
+                                         text="ПРГ1  MA = MB × (MC × MD)"
                                          styleClass="prg-radio" selected="true"/>
-                            <RadioButton fx:id="radioPRG2" text="ПРГ2  MA = MB×MC + MD×ME"
+                            <RadioButton fx:id="radioPRG2"
+                                         text="ПРГ2  MA = MB×MC + MD×ME"
                                          styleClass="prg-radio"/>
-                            <RadioButton fx:id="radioPRG3" text="ПРГ3  MA = max(MR) × (MB × MC)"
+                            <RadioButton fx:id="radioPRG3"
+                                         text="ПРГ3  MA = max(MR) × (MB × MC)"
                                          styleClass="prg-radio"/>
                         </HBox>
 
-                        <!-- Рядок 1: Розмір N -->
+                        <!-- Рядок 1: Розмір N + Потоків P -->
                         <Label text="Розмір матриць N:" styleClass="param-label"
                                GridPane.rowIndex="1" GridPane.columnIndex="0"/>
                         <HBox spacing="10" alignment="CENTER_LEFT"
                               GridPane.rowIndex="1" GridPane.columnIndex="1">
-                            <Spinner fx:id="spinnerN" prefWidth="120"
+                            <Spinner fx:id="spinnerN" prefWidth="110"
                                      editable="true" styleClass="param-spinner"/>
                             <Label text="(N×N елементів)" styleClass="hint-label"/>
                             <Region HBox.hgrow="ALWAYS"/>
                             <Label text="Потоків P:" styleClass="param-label"/>
-                            <Spinner fx:id="spinnerP" prefWidth="90"
+                            <Spinner fx:id="spinnerP" prefWidth="85"
                                      editable="true" styleClass="param-spinner"/>
                             <Label fx:id="labelCpuHint" text="" styleClass="hint-label"/>
                         </HBox>
 
-                        <!-- Рядок 2: Кнопка запуску -->
+                        <!-- Рядок 2: Підказка про матриці -->
                         <Label GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-                        <HBox spacing="12" alignment="CENTER_LEFT"
-                              GridPane.rowIndex="2" GridPane.columnIndex="1">
+                        <Label fx:id="labelMatrixHint"
+                               text="ℹ  Вхідні матриці заповнюються випадковими числами [-10, +10] перед кожним запуском."
+                               styleClass="hint-label"
+                               GridPane.rowIndex="2" GridPane.columnIndex="1"
+                               wrapText="true"/>
+
+                        <!-- Рядок 3: Кнопки керування -->
+                        <Label GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT"
+                              GridPane.rowIndex="3" GridPane.columnIndex="1">
                             <Button fx:id="btnRun" text="▶  Запустити"
                                     styleClass="button,run-button"
-                                    onAction="#onRun" prefWidth="150"/>
+                                    onAction="#onRun" prefWidth="145"/>
                             <Button fx:id="btnCancel" text="✕  Скасувати"
                                     styleClass="button,secondary"
                                     onAction="#onCancel"
-                                    disable="true" prefWidth="130"/>
+                                    disable="true" prefWidth="125"/>
                             <ProgressIndicator fx:id="progressIndicator"
                                                prefWidth="22" prefHeight="22"
                                                visible="false"/>
@@ -79,16 +87,16 @@
                     </GridPane>
                 </TitledPane>
 
-                <!-- ── Блок 2: Результат виконання ──────────────── -->
-                <TitledPane fx:id="paneResult" text="Результат виконання"
-                            collapsible="false" styleClass="section-pane">
+                <!-- ── Блок 2: Метрики + Матриця MA ─────────────── -->
+                <TitledPane text="Результат виконання" collapsible="false"
+                            styleClass="section-pane">
                     <VBox spacing="10">
                         <padding><Insets top="10" right="14" bottom="10" left="14"/></padding>
 
                         <!-- Рядок метрик -->
-                        <HBox spacing="24" alignment="CENTER_LEFT"
+                        <HBox spacing="20" alignment="CENTER_LEFT"
                               styleClass="metrics-bar">
-                            <padding><Insets top="8" right="12" bottom="8" left="12"/></padding>
+                            <padding><Insets top="8" right="14" bottom="8" left="14"/></padding>
 
                             <VBox spacing="2" alignment="CENTER">
                                 <Label text="Час виконання" styleClass="metric-caption"/>
@@ -111,25 +119,24 @@
                             </VBox>
                             <Separator orientation="VERTICAL"/>
                             <VBox spacing="2" alignment="CENTER">
-                                <Label text="Розмір MA (МБ)" styleClass="metric-caption"/>
+                                <Label text="Розмір MA" styleClass="metric-caption"/>
                                 <Label fx:id="labelMemory" text="—" styleClass="metric-value"/>
                             </VBox>
                         </HBox>
 
-                        <!-- Таблиця результатів (заповнюється у Фазі 6б) -->
-                        <TableView fx:id="tableResult"
-                                   prefHeight="320"
-                                   placeholder="$labelTablePlaceholder"
-                                   styleClass="result-table">
-                            <columns>
-                                <TableColumn fx:id="colRow"  text="Рядок"    prefWidth="80"/>
-                                <TableColumn fx:id="colCol"  text="Стовпець" prefWidth="90"/>
-                                <TableColumn fx:id="colVal"  text="MA[i][j]" prefWidth="160"/>
-                            </columns>
-                        </TableView>
-                        <Label fx:id="labelTablePlaceholder"
+                        <!-- Підпис над таблицею -->
+                        <Label fx:id="labelTableStatus"
                                text="Натисніть «Запустити» для обчислення"
-                               styleClass="placeholder-label"/>
+                               styleClass="hint-label"/>
+
+                        <!-- Таблиця-сітка матриці MA.
+                             Колонки створюються динамічно через TableRenderer.
+                             fx:id="tableResult" — тип рядка ObservableList<String>. -->
+                        <TableView fx:id="tableResult"
+                                   prefHeight="300"
+                                   styleClass="result-table">
+                            <!-- Колонок немає: TableRenderer додає їх динамічно -->
+                        </TableView>
 
                     </VBox>
                 </TitledPane>
@@ -145,10 +152,10 @@
         <HBox styleClass="action-bar" alignment="CENTER_LEFT" spacing="10">
             <padding><Insets top="8" right="14" bottom="8" left="14"/></padding>
 
-            <Button fx:id="btnCopy" text="📋  Копіювати"
+            <Button fx:id="btnCopy"    text="📋  Копіювати (TSV)"
                     styleClass="button,secondary"
                     onAction="#onCopy" disable="true"/>
-            <Button fx:id="btnSaveCsv" text="💾  Зберегти CSV"
+            <Button fx:id="btnSaveCsv" text="💾  Зберегти матрицю MA (CSV)"
                     styleClass="button,secondary"
                     onAction="#onSaveCsv" disable="true"/>
             <Region HBox.hgrow="ALWAYS"/>
