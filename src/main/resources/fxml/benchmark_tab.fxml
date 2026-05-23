@@ -1,21 +1,215 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="org.example.ui.controller.BenchmarkTabController">
 
+    <!-- ═══════════════════════════════════════════════════════════
+         CENTER
+         ═══════════════════════════════════════════════════════════ -->
     <center>
-        <VBox alignment="CENTER" spacing="16">
-            <padding><Insets top="40"/></padding>
-            <Label text="📊  Вкладка «Бенчмарк»"
-                   style="-fx-font-size: 18; -fx-font-weight: bold;"/>
-            <Label text="Буде реалізовано у Фазі 7."
-                   style="-fx-font-size: 13; -fx-text-fill: #888;"/>
-        </VBox>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="edge-to-edge">
+            <VBox spacing="12">
+                <padding><Insets top="14" right="16" bottom="14" left="16"/></padding>
+
+                <!-- ── Блок 1: Параметри бенчмарку ──────────────── -->
+                <TitledPane text="Параметри бенчмарку" collapsible="false"
+                            styleClass="section-pane">
+                    <GridPane hgap="14" vgap="10">
+                        <padding><Insets top="12" right="14" bottom="12" left="14"/></padding>
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="140" maxWidth="160"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <!-- Рядок 0: Вибір програми -->
+                        <Label text="Програма:" styleClass="param-label"
+                               GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <HBox spacing="16" alignment="CENTER_LEFT"
+                              GridPane.rowIndex="0" GridPane.columnIndex="1">
+                            <RadioButton fx:id="radioPRG1" text="ПРГ1" selected="true"
+                                         styleClass="prg-radio"/>
+                            <RadioButton fx:id="radioPRG2" text="ПРГ2"
+                                         styleClass="prg-radio"/>
+                            <RadioButton fx:id="radioPRG3" text="ПРГ3"
+                                         styleClass="prg-radio"/>
+                        </HBox>
+
+                        <!-- Рядок 1: Розмір N -->
+                        <Label text="Розмір матриць N:" styleClass="param-label"
+                               GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT"
+                              GridPane.rowIndex="1" GridPane.columnIndex="1">
+                            <Spinner fx:id="spinnerN" prefWidth="110"
+                                     editable="true" styleClass="param-spinner"/>
+                            <Label text="(N×N елементів)" styleClass="hint-label"/>
+                        </HBox>
+
+                        <!-- Рядок 2: Кількість потоків (чекбокси) -->
+                        <Label text="Потоки P:" styleClass="param-label"
+                               GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT"
+                              GridPane.rowIndex="2" GridPane.columnIndex="1">
+                            <CheckBox fx:id="chk1"  text="1"  selected="true"/>
+                            <CheckBox fx:id="chk2"  text="2"  selected="true"/>
+                            <CheckBox fx:id="chk3"  text="3"  selected="true"/>
+                            <CheckBox fx:id="chk4"  text="4"  selected="true"/>
+                            <CheckBox fx:id="chk6"  text="6"  selected="true"/>
+                            <CheckBox fx:id="chk8"  text="8"/>
+                            <CheckBox fx:id="chk12" text="12"/>
+                            <Label text="  або введіть вручну (через кому):"
+                                   styleClass="hint-label"/>
+                            <TextField fx:id="fieldCustomP" prefWidth="140"
+                                       promptText="напр.: 1,2,4,8,16"/>
+                        </HBox>
+
+                        <!-- Рядок 3: Кількість повторів -->
+                        <Label text="Повторів на точку:" styleClass="param-label"
+                               GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT"
+                              GridPane.rowIndex="3" GridPane.columnIndex="1">
+                            <Spinner fx:id="spinnerRuns" prefWidth="80"
+                                     editable="true" styleClass="param-spinner"/>
+                            <Label text="(береться мінімальний час)" styleClass="hint-label"/>
+                        </HBox>
+
+                        <!-- Рядок 4: Кнопки + прогрес -->
+                        <Label GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT"
+                              GridPane.rowIndex="4" GridPane.columnIndex="1">
+                            <Button fx:id="btnRun" text="▶  Запустити бенчмарк"
+                                    styleClass="button,run-button"
+                                    onAction="#onRun" prefWidth="180"/>
+                            <Button fx:id="btnCancel" text="✕  Зупинити"
+                                    styleClass="button,secondary"
+                                    onAction="#onCancel"
+                                    disable="true" prefWidth="110"/>
+                            <Button fx:id="btnClear" text="🗑  Очистити"
+                                    styleClass="button,secondary"
+                                    onAction="#onClear" prefWidth="110"/>
+                        </HBox>
+
+                        <!-- Рядок 5: Прогрес-бар -->
+                        <Label GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                        <VBox spacing="4"
+                              GridPane.rowIndex="5" GridPane.columnIndex="1">
+                            <ProgressBar fx:id="progressBar"
+                                         prefWidth="400" prefHeight="14"
+                                         progress="0" visible="false"/>
+                            <Label fx:id="labelProgress" text=""
+                                   styleClass="hint-label"/>
+                        </VBox>
+
+                    </GridPane>
+                </TitledPane>
+
+                <!-- ── Блок 2: Таблиця результатів ──────────────── -->
+                <TitledPane text="Результати вимірювань" collapsible="false"
+                            styleClass="section-pane">
+                    <VBox spacing="8">
+                        <padding><Insets top="10" right="14" bottom="10" left="14"/></padding>
+
+                        <TableView fx:id="tableResults" prefHeight="220"
+                                   styleClass="result-table">
+                            <columns>
+                                <TableColumn fx:id="colP"    text="Потоків P"
+                                             prefWidth="100" style="-fx-alignment:CENTER;"/>
+                                <TableColumn fx:id="colTime" text="Час (мс)"
+                                             prefWidth="110" style="-fx-alignment:CENTER_RIGHT;"/>
+                                <TableColumn fx:id="colS"    text="Прискорення S"
+                                             prefWidth="140" style="-fx-alignment:CENTER_RIGHT;"/>
+                                <TableColumn fx:id="colE"    text="Ефективність E (%)"
+                                             prefWidth="170" style="-fx-alignment:CENTER_RIGHT;"/>
+                                <TableColumn fx:id="colN"    text="N"
+                                             prefWidth="80"  style="-fx-alignment:CENTER;"/>
+                                <TableColumn fx:id="colPrg"  text="ПРГ"
+                                             prefWidth="70"  style="-fx-alignment:CENTER;"/>
+                            </columns>
+                            <placeholder>
+                                <Label text="Запустіть бенчмарк для отримання результатів"
+                                       styleClass="hint-label"/>
+                            </placeholder>
+                        </TableView>
+
+                        <Label fx:id="labelTableInfo" text="" styleClass="hint-label"/>
+                    </VBox>
+                </TitledPane>
+
+                <!-- ── Блок 3: Графіки (placeholder для 7б) ──────── -->
+                <TitledPane fx:id="paneCharts" text="Графіки" collapsible="true"
+                            expanded="true" styleClass="section-pane">
+                    <VBox spacing="10">
+                        <padding><Insets top="10" right="14" bottom="10" left="14"/></padding>
+
+                        <!-- Два графіки поруч -->
+                        <HBox spacing="14">
+                            <!-- Графік прискорення -->
+                            <VBox HBox.hgrow="ALWAYS" spacing="4">
+                                <Label text="Графік прискорення S(P)"
+                                       styleClass="param-label"/>
+                                <LineChart fx:id="chartSpeedup"
+                                           prefHeight="260" HBox.hgrow="ALWAYS">
+                                    <xAxis>
+                                        <NumberAxis fx:id="xAxisSpeedup"
+                                                    label="Кількість потоків P"
+                                                    autoRanging="true"/>
+                                    </xAxis>
+                                    <yAxis>
+                                        <NumberAxis fx:id="yAxisSpeedup"
+                                                    label="Прискорення S"
+                                                    autoRanging="true"/>
+                                    </yAxis>
+                                </LineChart>
+                            </VBox>
+
+                            <!-- Графік ефективності -->
+                            <VBox HBox.hgrow="ALWAYS" spacing="4">
+                                <Label text="Графік ефективності E(P)"
+                                       styleClass="param-label"/>
+                                <LineChart fx:id="chartEfficiency"
+                                           prefHeight="260" HBox.hgrow="ALWAYS">
+                                    <xAxis>
+                                        <NumberAxis fx:id="xAxisEfficiency"
+                                                    label="Кількість потоків P"
+                                                    autoRanging="true"/>
+                                    </xAxis>
+                                    <yAxis>
+                                        <NumberAxis fx:id="yAxisEfficiency"
+                                                    label="Ефективність E (%)"
+                                                    autoRanging="true"/>
+                                    </yAxis>
+                                </LineChart>
+                            </VBox>
+                        </HBox>
+
+                    </VBox>
+                </TitledPane>
+
+            </VBox>
+        </ScrollPane>
     </center>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         BOTTOM — панель дій
+         ═══════════════════════════════════════════════════════════ -->
+    <bottom>
+        <HBox styleClass="action-bar" alignment="CENTER_LEFT" spacing="10">
+            <padding><Insets top="8" right="14" bottom="8" left="14"/></padding>
+
+            <Button fx:id="btnSaveCsv" text="💾  Зберегти CSV"
+                    styleClass="button,secondary"
+                    onAction="#onSaveCsv" disable="true"/>
+            <Button fx:id="btnSavePng" text="🖼  Зберегти графіки PNG"
+                    styleClass="button,secondary"
+                    onAction="#onSavePng" disable="true"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="labelActionStatus" text="" styleClass="hint-label"/>
+        </HBox>
+    </bottom>
 
 </BorderPane>

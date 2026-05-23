@@ -97,7 +97,7 @@ public class ComputeTabController implements Initializable {
 
         // N: крок 1 — можна ввести будь-яке значення від 10 до 5000
         spinnerN.setValueFactory(
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(10, 5000, 500, 1));
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(2, 5000, 500, 1));
         spinnerN.getEditor().setTextFormatter(intOnlyFormatter());
 
         // P: від 1 до кількості ядер
