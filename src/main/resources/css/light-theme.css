@@ -173,3 +173,85 @@
 .spinner .text-field:focused {
     -fx-border-color: #4a90d9;
 }
+
+.section-pane > .title {
+    -fx-background-color: #eef2f7;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+.param-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: #444444;
+}
+
+.hint-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #888888;
+}
+
+.prg-radio {
+    -fx-font-size: 12px;
+}
+
+.param-spinner {
+    -fx-font-size: 13px;
+}
+
+.run-button {
+    -fx-background-color: #2e7d32;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.run-button:hover {
+    -fx-background-color: #1b5e20;
+}
+
+.run-button:disabled {
+    -fx-background-color: #aaaaaa;
+}
+
+.run-status-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #666666;
+    -fx-font-style: italic;
+}
+
+.metrics-bar {
+    -fx-background-color: #f4f7fb;
+    -fx-background-radius: 6;
+    -fx-border-color: #d0dae8;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+}
+
+.metric-caption {
+    -fx-font-size: 10px;
+    -fx-text-fill: #888888;
+    -fx-font-weight: normal;
+}
+
+.metric-value {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a237e;
+}
+
+.result-table .column-header .label {
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.placeholder-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #aaaaaa;
+    -fx-font-style: italic;
+}
+
+.action-bar {
+    -fx-background-color: #f0f0f0;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1 0 0 0;
+}
