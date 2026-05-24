@@ -1,21 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="org.example.ui.controller.LogTabController">
 
+    <!-- ═══════════════════════════════════════════════════════════
+         TOP — панель управління
+         ═══════════════════════════════════════════════════════════ -->
+    <top>
+        <HBox styleClass="action-bar" alignment="CENTER_LEFT" spacing="10">
+            <padding><Insets top="8" right="14" bottom="8" left="14"/></padding>
+
+            <!-- Фільтр рівнів -->
+            <Label text="Рівень:" styleClass="param-label"/>
+            <CheckBox fx:id="chkInfo"  text="INFO"  selected="true" onAction="#onFilterChanged"/>
+            <CheckBox fx:id="chkWarn"  text="WARN"  selected="true" onAction="#onFilterChanged"/>
+            <CheckBox fx:id="chkError" text="ERROR" selected="true" onAction="#onFilterChanged"/>
+            <CheckBox fx:id="chkDebug" text="DEBUG" selected="false" onAction="#onFilterChanged"/>
+
+            <Separator orientation="VERTICAL"/>
+
+            <CheckBox fx:id="chkAutoScroll" text="Авто-прокрутка"
+                      selected="true" styleClass="hint-label"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Пошук -->
+            <TextField fx:id="fieldSearch" prefWidth="180"
+                       promptText="🔍 Пошук у журналі..."
+                       onKeyReleased="#onSearch"/>
+
+            <Separator orientation="VERTICAL"/>
+
+            <!-- Кнопки -->
+            <Button text="📋  Копіювати все"
+                    styleClass="button,secondary"
+                    onAction="#onCopyAll" prefWidth="140"/>
+            <Button text="🗑  Очистити журнал"
+                    styleClass="button,secondary"
+                    onAction="#onClear" prefWidth="150"/>
+        </HBox>
+    </top>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CENTER — текстова область журналу
+         ═══════════════════════════════════════════════════════════ -->
     <center>
-        <VBox alignment="CENTER" spacing="16">
-            <padding><Insets top="40"/></padding>
-            <Label text="📋  Вкладка «Журнал»"
-                   style="-fx-font-size: 18; -fx-font-weight: bold;"/>
-            <Label text="Буде реалізовано у Фазі 8."
-                   style="-fx-font-size: 13; -fx-text-fill: #888;"/>
-        </VBox>
+        <TextArea fx:id="logTextArea"
+                  editable="false"
+                  wrapText="false"
+                  styleClass="log-area"
+                  style="-fx-font-family: 'Consolas','Courier New',monospace; -fx-font-size: 12px;">
+        </TextArea>
     </center>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         BOTTOM — рядок стану
+         ═══════════════════════════════════════════════════════════ -->
+    <bottom>
+        <HBox styleClass="action-bar" alignment="CENTER_LEFT" spacing="16">
+            <padding><Insets top="5" right="14" bottom="5" left="14"/></padding>
+            <Label fx:id="labelEntryCount" text="Записів: 0"
+                   styleClass="hint-label"/>
+            <Separator orientation="VERTICAL"/>
+            <Label fx:id="labelFilteredCount" text="Відображається: 0"
+                   styleClass="hint-label"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="labelStatus" text="" styleClass="hint-label"/>
+        </HBox>
+    </bottom>
 
 </BorderPane>

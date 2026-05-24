@@ -19,6 +19,7 @@ import org.example.model.BenchmarkResult;
 import org.example.service.BenchmarkService;
 import org.example.service.LogService;
 import org.example.service.MatrixFileService;
+import org.example.service.UserPreferences;
 import org.example.ui.ChartBuilder;
 
 import java.io.File;
@@ -29,19 +30,18 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 /**
- * Контролер вкладки «Бенчмарк» — Фаза 7б.
+ * Контролер вкладки «Бенчмарк» — Фаза 9.
  *
- * <p>Додано відносно 7а:
+ * <p>Додано:
  * <ul>
- *   <li>Інтеграція з {@link ChartBuilder}: пунктирна ідеальна лінія,
- *       тултипи на точках, підписи значень.</li>
- *   <li>Збереження обох графіків у PNG через {@code ChartBuilder.saveBothToPng}.</li>
- *   <li>Оновлення стилів у реальному часі після кожного кроку бенчмарку.</li>
+ *   <li>Збереження та відновлення N, програми, кількості повторів
+ *       через {@link UserPreferences}.</li>
+ *   <li>Виклик {@link ChartBuilder#fixLegendColors} після кожного
+ *       кроку — тепер кольори легенди збігаються з лініями.</li>
  * </ul>
  */
 public class BenchmarkTabController implements Initializable {
 
-    // ── Параметри ─────────────────────────────────────────────────
     @FXML private RadioButton radioPRG1;
     @FXML private RadioButton radioPRG2;
     @FXML private RadioButton radioPRG3;
@@ -50,14 +50,12 @@ public class BenchmarkTabController implements Initializable {
     @FXML private CheckBox chk1, chk2, chk3, chk4, chk6, chk8, chk12;
     @FXML private TextField fieldCustomP;
 
-    // ── Керування ─────────────────────────────────────────────────
     @FXML private Button      btnRun;
     @FXML private Button      btnCancel;
     @FXML private Button      btnClear;
     @FXML private ProgressBar progressBar;
     @FXML private Label       labelProgress;
 
-    // ── Таблиця ───────────────────────────────────────────────────
     @FXML private TableView<BenchmarkResult>           tableResults;
     @FXML private TableColumn<BenchmarkResult, Number> colP;
     @FXML private TableColumn<BenchmarkResult, Number> colTime;
@@ -67,7 +65,6 @@ public class BenchmarkTabController implements Initializable {
     @FXML private TableColumn<BenchmarkResult, String> colPrg;
     @FXML private Label labelTableInfo;
 
-    // ── Графіки ───────────────────────────────────────────────────
     @FXML private LineChart<Number, Number> chartSpeedup;
     @FXML private LineChart<Number, Number> chartEfficiency;
     @FXML private NumberAxis xAxisSpeedup;
@@ -75,19 +72,16 @@ public class BenchmarkTabController implements Initializable {
     @FXML private NumberAxis xAxisEfficiency;
     @FXML private NumberAxis yAxisEfficiency;
 
-    // ── Дії ───────────────────────────────────────────────────────
     @FXML private Button btnSaveCsv;
     @FXML private Button btnSavePng;
     @FXML private Label  labelActionStatus;
 
-    // ── Стан ─────────────────────────────────────────────────────
     private ToggleGroup prgToggleGroup;
     private Task<List<BenchmarkResult>> currentTask;
     private final ObservableList<BenchmarkResult> tableData =
             FXCollections.observableArrayList();
     private final LogService log = LogService.getInstance();
 
-    // Серії даних
     private XYChart.Series<Number, Number> seriesSpeedup;
     private XYChart.Series<Number, Number> seriesIdealSpeedup;
     private XYChart.Series<Number, Number> seriesEfficiency;
@@ -103,6 +97,7 @@ public class BenchmarkTabController implements Initializable {
         setupSpinners();
         setupTable();
         setupCharts();
+        restorePreferences();
     }
 
     private void setupToggleGroup() {
@@ -111,16 +106,25 @@ public class BenchmarkTabController implements Initializable {
         radioPRG2.setToggleGroup(prgToggleGroup);
         radioPRG3.setToggleGroup(prgToggleGroup);
         radioPRG1.setSelected(true);
+
+        prgToggleGroup.selectedToggleProperty().addListener((obs, o, n) ->
+                UserPreferences.setBenchPrg(selectedPrg()));
     }
 
     private void setupSpinners() {
-        int maxCores = Runtime.getRuntime().availableProcessors();
-        spinnerN.setValueFactory(
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(2, 5000, 500, 1));
+        spinnerN.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(
+                2, 5000, UserPreferences.getBenchN(), 1));
         spinnerN.getEditor().setTextFormatter(intFormatter());
-        spinnerRuns.setValueFactory(
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10, 3, 1));
+        spinnerN.valueProperty().addListener((obs, o, n) -> {
+            if (n != null) UserPreferences.setBenchN(n);
+        });
+
+        spinnerRuns.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(
+                1, 10, UserPreferences.getBenchRuns(), 1));
         spinnerRuns.getEditor().setTextFormatter(intFormatter());
+        spinnerRuns.valueProperty().addListener((obs, o, n) -> {
+            if (n != null) UserPreferences.setBenchRuns(n);
+        });
     }
 
     private void setupTable() {
@@ -139,7 +143,6 @@ public class BenchmarkTabController implements Initializable {
         colPrg.setCellValueFactory(d ->
                 new SimpleStringProperty("ПРГ" + d.getValue().getPrgNumber()));
 
-        // Виділення рядка P=1 жирним
         tableResults.setRowFactory(tv -> new TableRow<>() {
             @Override
             protected void updateItem(BenchmarkResult item, boolean empty) {
@@ -148,14 +151,13 @@ public class BenchmarkTabController implements Initializable {
                         ? "-fx-font-weight: bold;" : "");
             }
         });
-
         tableResults.setItems(tableData);
     }
 
     private void setupCharts() {
-        seriesSpeedup       = new XYChart.Series<>();
-        seriesIdealSpeedup  = new XYChart.Series<>();
-        seriesEfficiency    = new XYChart.Series<>();
+        seriesSpeedup         = new XYChart.Series<>();
+        seriesIdealSpeedup    = new XYChart.Series<>();
+        seriesEfficiency      = new XYChart.Series<>();
         seriesIdealEfficiency = new XYChart.Series<>();
 
         seriesSpeedup.setName("Реальне S");
@@ -163,14 +165,19 @@ public class BenchmarkTabController implements Initializable {
         seriesEfficiency.setName("Реальна E (%)");
         seriesIdealEfficiency.setName("Ідеальна E = 100%");
 
-        // Ідеальна серія — першою (щоб йшла знизу у легенді)
         chartSpeedup.getData().addAll(seriesIdealSpeedup, seriesSpeedup);
         chartEfficiency.getData().addAll(seriesIdealEfficiency, seriesEfficiency);
-
         chartSpeedup.setAnimated(false);
         chartEfficiency.setAnimated(false);
-        chartSpeedup.setCreateSymbols(true);
-        chartEfficiency.setCreateSymbols(true);
+    }
+
+    /** Відновлює останній вибір програми з Preferences. */
+    private void restorePreferences() {
+        switch (UserPreferences.getBenchPrg()) {
+            case 2 -> radioPRG2.setSelected(true);
+            case 3 -> radioPRG3.setSelected(true);
+            default -> radioPRG1.setSelected(true);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -212,11 +219,10 @@ public class BenchmarkTabController implements Initializable {
         currentTask = new Task<>() {
             @Override
             protected List<BenchmarkResult> call() {
-                BenchmarkService svc = new BenchmarkService();
-                return svc.run(finalPrg, finalN, tCounts, finalRuns,
-                        (stepIndex, totalSteps, result) ->
+                return new BenchmarkService().run(finalPrg, finalN, tCounts, finalRuns,
+                        (step, total, result) ->
                                 Platform.runLater(() ->
-                                        onProgressStep(stepIndex, totalSteps, result)));
+                                        onProgressStep(step, total, result)));
             }
         };
 
@@ -242,7 +248,6 @@ public class BenchmarkTabController implements Initializable {
         labelProgress.setText("");
         setActionButtonsEnabled(false);
         labelActionStatus.setText("");
-        log.info("UI → Результати бенчмарку очищено.");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -258,56 +263,39 @@ public class BenchmarkTabController implements Initializable {
         labelProgress.setText("Прогрівання JVM...");
     }
 
-    /**
-     * Після кожного виміру: додає рядок у таблицю, оновлює графіки та стилізує нові точки.
-     */
-    private void onProgressStep(int stepIndex, int totalSteps, BenchmarkResult result) {
-        // Таблиця
+    private void onProgressStep(int step, int total, BenchmarkResult result) {
         tableData.add(result);
         tableResults.scrollTo(result);
 
-        // Прогрес
-        progressBar.setProgress((double)(stepIndex + 1) / totalSteps);
+        progressBar.setProgress((double)(step + 1) / total);
         labelProgress.setText(String.format(
                 "Крок %d/%d — P=%d → %d мс  |  S=%.3f  |  E=%.1f%%",
-                stepIndex + 1, totalSteps,
-                result.getP(), result.getElapsedMs(),
+                step + 1, total, result.getP(), result.getElapsedMs(),
                 result.getSpeedup(), result.getEfficiency() * 100.0));
 
-        // Додаємо точки на графіки
+        // Додаємо точки
         int p = result.getP();
-        XYChart.Data<Number, Number> dS =
-                new XYChart.Data<>(p, result.getSpeedup());
-        XYChart.Data<Number, Number> dE =
-                new XYChart.Data<>(p, result.getEfficiency() * 100.0);
+        XYChart.Data<Number, Number> dS  = new XYChart.Data<>(p, result.getSpeedup());
+        XYChart.Data<Number, Number> dE  = new XYChart.Data<>(p, result.getEfficiency() * 100.0);
         XYChart.Data<Number, Number> dIS = new XYChart.Data<>(p, (double) p);
         XYChart.Data<Number, Number> dIE = new XYChart.Data<>(p, 100.0);
-
-        seriesRealPointLater(dS, dE, dIS, dIE, result);
-    }
-
-    /**
-     * Додає точки на графіки та застосовує стилі після відмальовування.
-     */
-    private void seriesRealPointLater(
-            XYChart.Data<Number, Number> dS,
-            XYChart.Data<Number, Number> dE,
-            XYChart.Data<Number, Number> dIS,
-            XYChart.Data<Number, Number> dIE,
-            BenchmarkResult result) {
 
         seriesSpeedup.getData().add(dS);
         seriesEfficiency.getData().add(dE);
         seriesIdealSpeedup.getData().add(dIS);
         seriesIdealEfficiency.getData().add(dIE);
 
-        // Стилізація після рендеру
+        // Стилізація точок + фікс легенди після кожного кроку
         Platform.runLater(() -> {
             ChartBuilder.styleDataPoint(dS, result, true);
             ChartBuilder.styleDataPoint(dE, result, false);
-            // Ховаємо символ ідеальної лінії
             if (dIS.getNode() != null) dIS.getNode().setVisible(false);
             if (dIE.getNode() != null) dIE.getNode().setVisible(false);
+            // Фікс кольорів легенди (Фаза 9)
+            ChartBuilder.fixLegendColors(chartSpeedup,
+                    ChartBuilder.COLOR_IDEAL, ChartBuilder.COLOR_REAL_S);
+            ChartBuilder.fixLegendColors(chartEfficiency,
+                    ChartBuilder.COLOR_IDEAL, ChartBuilder.COLOR_REAL_E);
         });
     }
 
@@ -326,7 +314,7 @@ public class BenchmarkTabController implements Initializable {
                     results.size()));
         }
 
-        // Фінальна стилізація ліній (пунктир для ідеальних)
+        // Фінальна стилізація ліній та легенди
         Platform.runLater(() -> {
             ChartBuilder.styleSpeedupChart(chartSpeedup,
                     seriesIdealSpeedup, seriesSpeedup);
@@ -344,9 +332,8 @@ public class BenchmarkTabController implements Initializable {
         btnClear.setDisable(false);
         progressBar.setVisible(false);
         labelProgress.setText("");
-        String msg = ex != null ? ex.getMessage() : "Невідома помилка";
-        log.error("БЕНЧМАРК: помилка — " + msg);
-        showError("Помилка бенчмарку", msg);
+        showError("Помилка бенчмарку",
+                ex != null ? ex.getMessage() : "Невідома помилка");
     }
 
     private void onTaskCancelled() {
@@ -354,7 +341,6 @@ public class BenchmarkTabController implements Initializable {
         btnCancel.setDisable(true);
         btnClear.setDisable(false);
         labelProgress.setText("Зупинено.");
-        log.warn("БЕНЧМАРК: зупинено.");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -364,12 +350,11 @@ public class BenchmarkTabController implements Initializable {
     @FXML
     private void onSaveCsv() {
         if (tableData.isEmpty()) return;
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle("Зберегти результати бенчмарку");
         int prg = tableData.get(0).getPrgNumber();
         int n   = tableData.get(0).getN();
-        chooser.setInitialFileName(
-                String.format("benchmark_PRG%d_N%d.csv", prg, n));
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Зберегти результати бенчмарку");
+        chooser.setInitialFileName(String.format("benchmark_PRG%d_N%d.csv", prg, n));
         chooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"));
         File file = chooser.showSaveDialog(btnSaveCsv.getScene().getWindow());
@@ -378,34 +363,27 @@ public class BenchmarkTabController implements Initializable {
             MatrixFileService.saveBenchmarkResults(
                     new ArrayList<>(tableData), prg, n, file.toPath());
             labelActionStatus.setText("✓ CSV збережено: " + file.getName());
-            log.info("БЕНЧМАРК: CSV збережено — " + file.getAbsolutePath());
         } catch (IOException e) {
             showError("Помилка збереження CSV", e.getMessage());
         }
     }
 
-    /**
-     * Зберігає обидва графіки в один PNG-файл через {@link ChartBuilder#saveBothToPng}.
-     */
     @FXML
     private void onSavePng() {
         if (tableData.isEmpty()) return;
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle("Зберегти графіки PNG");
         int prg = tableData.get(0).getPrgNumber();
         int n   = tableData.get(0).getN();
-        chooser.setInitialFileName(
-                String.format("charts_PRG%d_N%d.png", prg, n));
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Зберегти графіки PNG");
+        chooser.setInitialFileName(String.format("charts_PRG%d_N%d.png", prg, n));
         chooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("PNG зображення (*.png)", "*.png"));
+                new FileChooser.ExtensionFilter("PNG (*.png)", "*.png"));
         File file = chooser.showSaveDialog(btnSavePng.getScene().getWindow());
         if (file == null) return;
         try {
             ChartBuilder.saveBothToPng(chartSpeedup, chartEfficiency, file);
-            String size = MatrixFileService.humanFileSize(file.toPath());
             labelActionStatus.setText("✓ PNG збережено: " + file.getName()
-                    + " (" + size + ")");
-            log.info("БЕНЧМАРК: PNG збережено — " + file.getAbsolutePath());
+                    + " (" + MatrixFileService.humanFileSize(file.toPath()) + ")");
         } catch (IOException e) {
             showError("Помилка збереження PNG", e.getMessage());
         }
@@ -451,10 +429,8 @@ public class BenchmarkTabController implements Initializable {
     private void commitSpinners() {
         String tN = spinnerN.getEditor().getText().trim();
         String tR = spinnerRuns.getEditor().getText().trim();
-        if (!tN.isEmpty())
-            spinnerN.getValueFactory().setValue(Integer.parseInt(tN));
-        if (!tR.isEmpty())
-            spinnerRuns.getValueFactory().setValue(Integer.parseInt(tR));
+        if (!tN.isEmpty()) spinnerN.getValueFactory().setValue(Integer.parseInt(tN));
+        if (!tR.isEmpty()) spinnerRuns.getValueFactory().setValue(Integer.parseInt(tR));
     }
 
     private TextFormatter<Integer> intFormatter() {

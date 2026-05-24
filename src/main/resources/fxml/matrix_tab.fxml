@@ -1,21 +1,117 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="org.example.ui.controller.MatrixTabController">
 
+    <!-- ═══════════════════════════════════════════════════════════
+         CENTER
+         ═══════════════════════════════════════════════════════════ -->
     <center>
-        <VBox alignment="CENTER" spacing="16">
-            <padding><Insets top="40"/></padding>
-            <Label text="🔢  Вкладка «Матриці»"
-                   style="-fx-font-size: 18; -fx-font-weight: bold;"/>
-            <Label text="Буде реалізовано у Фазі 8."
-                   style="-fx-font-size: 13; -fx-text-fill: #888;"/>
-        </VBox>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="edge-to-edge">
+            <VBox spacing="12">
+                <padding><Insets top="14" right="16" bottom="14" left="16"/></padding>
+
+                <!-- ── Блок 1: Параметри ─────────────────────────── -->
+                <TitledPane text="Параметри матриць" collapsible="false"
+                            styleClass="section-pane">
+                    <GridPane hgap="14" vgap="10">
+                        <padding><Insets top="12" right="14" bottom="12" left="14"/></padding>
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="140" maxWidth="160"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <!-- Програма -->
+                        <Label text="Програма:" styleClass="param-label"
+                               GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <HBox spacing="14" alignment="CENTER_LEFT"
+                              GridPane.rowIndex="0" GridPane.columnIndex="1">
+                            <RadioButton fx:id="radioPRG1" text="ПРГ1  (MB, MC, MD)"
+                                         selected="true" styleClass="prg-radio"/>
+                            <RadioButton fx:id="radioPRG2" text="ПРГ2  (MB, MC, MD, ME)"
+                                         styleClass="prg-radio"/>
+                            <RadioButton fx:id="radioPRG3" text="ПРГ3  (MR, MB, MC)"
+                                         styleClass="prg-radio"/>
+                        </HBox>
+
+                        <!-- Розмір N -->
+                        <Label text="Розмір матриць N:" styleClass="param-label"
+                               GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT"
+                              GridPane.rowIndex="1" GridPane.columnIndex="1">
+                            <Spinner fx:id="spinnerN" prefWidth="110"
+                                     editable="true" styleClass="param-spinner"/>
+                            <Label text="(N×N елементів)" styleClass="hint-label"/>
+                        </HBox>
+
+                        <!-- Кнопки -->
+                        <Label GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT"
+                              GridPane.rowIndex="2" GridPane.columnIndex="1">
+                            <Button fx:id="btnGenRandom" text="🎲  Генерувати випадкові"
+                                    styleClass="button,run-button"
+                                    onAction="#onGenRandom" prefWidth="190"/>
+                            <Button fx:id="btnLoadCsv" text="📂  Завантажити з CSV"
+                                    styleClass="button,secondary"
+                                    onAction="#onLoadCsv" prefWidth="180"/>
+                            <Button fx:id="btnClearAll" text="🗑  Очистити"
+                                    styleClass="button,secondary"
+                                    onAction="#onClearAll" prefWidth="110"/>
+                        </HBox>
+
+                        <!-- Підказка -->
+                        <Label GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <Label fx:id="labelHint"
+                               text="ℹ  Оберіть програму, задайте N і натисніть «Генерувати» або завантажте матрицю з CSV-файлу."
+                               styleClass="hint-label" wrapText="true"
+                               GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                    </GridPane>
+                </TitledPane>
+
+                <!-- ── Блок 2: Перегляд матриць (TabPane) ─────────── -->
+                <TitledPane text="Перегляд матриць" collapsible="false"
+                            styleClass="section-pane">
+                    <VBox spacing="8">
+                        <padding><Insets top="10" right="14" bottom="10" left="14"/></padding>
+
+                        <!-- Вкладки матриць — заповнюються динамічно -->
+                        <TabPane fx:id="matrixTabPane"
+                                 tabClosingPolicy="UNAVAILABLE"
+                                 tabMinWidth="80">
+                            <!-- Вкладки додаються програмно при зміні програми або генерації -->
+                        </TabPane>
+
+                        <Label fx:id="labelMatrixStatus" text=""
+                               styleClass="hint-label"/>
+                    </VBox>
+                </TitledPane>
+
+            </VBox>
+        </ScrollPane>
     </center>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         BOTTOM
+         ═══════════════════════════════════════════════════════════ -->
+    <bottom>
+        <HBox styleClass="action-bar" alignment="CENTER_LEFT" spacing="10">
+            <padding><Insets top="8" right="14" bottom="8" left="14"/></padding>
+
+            <Button fx:id="btnSaveCurrent" text="💾  Зберегти поточну матрицю"
+                    styleClass="button,secondary"
+                    onAction="#onSaveCurrent" disable="true"/>
+            <Button fx:id="btnSaveAll" text="💾  Зберегти всі матриці"
+                    styleClass="button,secondary"
+                    onAction="#onSaveAll" disable="true"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="labelActionStatus" text="" styleClass="hint-label"/>
+        </HBox>
+    </bottom>
 
 </BorderPane>

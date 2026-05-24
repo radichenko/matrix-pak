@@ -8,79 +8,63 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import org.example.model.ExecutionResult;
-import org.example.model.Matrix;
-import org.example.prg.AbstractPRG;
 import org.example.prg.PRG1;
 import org.example.prg.PRG2;
 import org.example.prg.PRG3;
 import org.example.service.LogService;
 import org.example.service.MatrixFileService;
+import org.example.service.MatrixStore;
+import org.example.service.UserPreferences;
 import org.example.ui.TableRenderer;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.ResourceBundle;
 
 /**
- * Контролер вкладки «Обчислення».
+ * Контролер вкладки «Обчислення» — Фаза 9.
  *
- * <p>Фаза 6б: повна інтеграція з {@link TableRenderer} —
- * таблиця відображає матрицю MA у вигляді числової сітки
- * (рядки матриці = рядки таблиці, стовпці матриці = стовпці таблиці).
+ * <p>Додано збереження та відновлення останніх значень N, P та програми
+ * через {@link UserPreferences}.
  */
 public class ComputeTabController implements Initializable {
 
-    // ── Вибір програми ───────────────────────────────────────────
     @FXML private RadioButton radioPRG1;
     @FXML private RadioButton radioPRG2;
     @FXML private RadioButton radioPRG3;
-
-    // ── Параметри ─────────────────────────────────────────────────
     @FXML private Spinner<Integer> spinnerN;
     @FXML private Spinner<Integer> spinnerP;
     @FXML private Label            labelCpuHint;
     @FXML private Label            labelMatrixHint;
-
-    // ── Керування ─────────────────────────────────────────────────
     @FXML private Button            btnRun;
     @FXML private Button            btnCancel;
     @FXML private ProgressIndicator progressIndicator;
     @FXML private Label             labelRunStatus;
-
-    // ── Метрики ───────────────────────────────────────────────────
     @FXML private Label labelTime;
     @FXML private Label labelPrg;
     @FXML private Label labelN;
     @FXML private Label labelP;
     @FXML private Label labelMemory;
-
-    // ── Таблиця (тип рядка — ObservableList<String>) ──────────────
     @FXML private TableView<ObservableList<String>> tableResult;
     @FXML private Label                             labelTableStatus;
-
-    // ── Дії ───────────────────────────────────────────────────────
     @FXML private Button btnCopy;
     @FXML private Button btnSaveCsv;
     @FXML private Label  labelActionStatus;
 
-    // ── Стан ─────────────────────────────────────────────────────
     private ToggleGroup           prgToggleGroup;
     private Task<ExecutionResult> currentTask;
     private ExecutionResult       lastResult;
     private final LogService      log = LogService.getInstance();
 
     // ─────────────────────────────────────────────────────────────
-    //  Ініціалізація
-    // ─────────────────────────────────────────────────────────────
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupToggleGroup();
         setupSpinners();
-        tableResult.setPlaceholder(
-                new Label("Натисніть «Запустити» для обчислення"));
+        restorePreferences();
+        tableResult.setPlaceholder(new Label("Натисніть «Запустити» для обчислення"));
     }
 
     private void setupToggleGroup() {
@@ -89,23 +73,43 @@ public class ComputeTabController implements Initializable {
         radioPRG2.setToggleGroup(prgToggleGroup);
         radioPRG3.setToggleGroup(prgToggleGroup);
         radioPRG1.setSelected(true);
+
+        // Зберігаємо вибір програми при кожній зміні
+        prgToggleGroup.selectedToggleProperty().addListener((obs, o, n) ->
+                UserPreferences.setComputePrg(selectedPrg()));
     }
 
     private void setupSpinners() {
         int maxCores = Runtime.getRuntime().availableProcessors();
-        int defaultP = Math.min(4, maxCores);
+        int defaultP = Math.min(UserPreferences.getComputeP(), maxCores);
 
-        // N: крок 1 — можна ввести будь-яке значення від 10 до 5000
         spinnerN.setValueFactory(
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(2, 5000, 500, 1));
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(2, 5000,
+                        UserPreferences.getComputeN(), 1));
         spinnerN.getEditor().setTextFormatter(intOnlyFormatter());
+        // Зберігаємо N при кожній зміні
+        spinnerN.valueProperty().addListener((obs, o, n) -> {
+            if (n != null) UserPreferences.setComputeN(n);
+        });
 
-        // P: від 1 до кількості ядер
         spinnerP.setValueFactory(
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(1, maxCores, defaultP, 1));
         spinnerP.getEditor().setTextFormatter(intOnlyFormatter());
+        spinnerP.valueProperty().addListener((obs, o, n) -> {
+            if (n != null) UserPreferences.setComputeP(n);
+        });
 
         labelCpuHint.setText("(ядер: " + maxCores + ")");
+    }
+
+    /** Відновлює останній вибір програми з Preferences. */
+    private void restorePreferences() {
+        int prg = UserPreferences.getComputePrg();
+        switch (prg) {
+            case 2 -> radioPRG2.setSelected(true);
+            case 3 -> radioPRG3.setSelected(true);
+            default -> radioPRG1.setSelected(true);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -131,20 +135,15 @@ public class ComputeTabController implements Initializable {
         }
 
         int prgNumber = selectedPrg();
-        AbstractPRG prg = buildPrg(prgNumber, N, P);
-        log.info(String.format("UI → Запуск %s | N=%d | P=%d", prg.getFormula(), N, P));
+        log.info(String.format("UI → Запуск ПРГ%d | N=%d | P=%d", prgNumber, N, P));
 
-        currentTask = new Task<>() {
-            @Override protected ExecutionResult call() { return prg.execute(); }
-        };
+        currentTask = buildTask(prgNumber, N, P);
         currentTask.setOnRunning(e   -> onRunning());
         currentTask.setOnSucceeded(e -> onSucceeded(currentTask.getValue()));
         currentTask.setOnFailed(e    -> onFailed(currentTask.getException()));
         currentTask.setOnCancelled(e -> onCancelled());
 
-        Thread t = new Thread(currentTask, "PRG-Thread");
-        t.setDaemon(true);
-        t.start();
+        new Thread(currentTask, "PRG-Thread") {{ setDaemon(true); }}.start();
     }
 
     @FXML
@@ -152,15 +151,53 @@ public class ComputeTabController implements Initializable {
         if (currentTask != null && currentTask.isRunning()) currentTask.cancel();
     }
 
+    private Task<ExecutionResult> buildTask(int prgNumber, int N, int P) {
+        return new Task<>() {
+            @Override
+            protected ExecutionResult call() {
+                MatrixStore store = MatrixStore.getInstance();
+                if (store.hasMatricesFor(prgNumber, N)) {
+                    log.info("UI → Матриці з вкладки «Матриці» (N=" + N + ")");
+                    return switch (prgNumber) {
+                        case 2 -> new PRG2(N, P).execute(
+                                store.get("MB").getData(),
+                                store.get("MC").getData(),
+                                store.get("MD").getData(),
+                                store.get("ME").getData());
+                        case 3 -> new PRG3(N, P).execute(
+                                store.get("MR").getData(),
+                                store.get("MB").getData(),
+                                store.get("MC").getData());
+                        default -> new PRG1(N, P).execute(
+                                store.get("MB").getData(),
+                                store.get("MC").getData(),
+                                store.get("MD").getData());
+                    };
+                } else {
+                    log.info("UI → Випадкові матриці (N=" + N + ")");
+                    return switch (prgNumber) {
+                        case 2  -> new PRG2(N, P).execute();
+                        case 3  -> new PRG3(N, P).execute();
+                        default -> new PRG1(N, P).execute();
+                    };
+                }
+            }
+        };
+    }
+
     // ─────────────────────────────────────────────────────────────
-    //  Task — зворотні виклики
+    //  Task callbacks
     // ─────────────────────────────────────────────────────────────
 
     private void onRunning() {
         btnRun.setDisable(true);
         btnCancel.setDisable(false);
         progressIndicator.setVisible(true);
-        labelRunStatus.setText("Виконується...");
+        boolean hasStored = MatrixStore.getInstance()
+                .hasMatricesFor(selectedPrg(), spinnerN.getValue());
+        labelRunStatus.setText(hasStored
+                ? "Виконується з матрицями з вкладки «Матриці»..."
+                : "Виконується з випадковими матрицями...");
         labelTableStatus.setText("");
         tableResult.getColumns().clear();
         tableResult.getItems().clear();
@@ -173,18 +210,13 @@ public class ComputeTabController implements Initializable {
         btnRun.setDisable(false);
         btnCancel.setDisable(true);
         labelRunStatus.setText("");
-
-        // Метрики
         labelTime.setText(result.getElapsedMs() + " мс");
         labelPrg.setText("ПРГ" + result.getPrgNumber());
         labelN.setText(String.valueOf(result.getN()));
         labelP.setText(String.valueOf(result.getP()));
         double mb = (double) result.getN() * result.getN() * 8 / (1024.0 * 1024.0);
         labelMemory.setText(String.format("%.2f МБ", mb));
-
-        // Відображення матриці через TableRenderer
         TableRenderer.render(tableResult, result.getResultMA(), labelTableStatus);
-
         setActionButtonsEnabled(true);
         log.info("UI → Завершено за " + result.getElapsedMs() + " мс");
     }
@@ -208,46 +240,32 @@ public class ComputeTabController implements Initializable {
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Дії — копіювання та збереження
+    //  Дії
     // ─────────────────────────────────────────────────────────────
 
-    /**
-     * Копіює відображувану таблицю у буфер обміну як TSV
-     * (Tab-Separated Values) — вставляється у Excel / LibreOffice Calc.
-     */
     @FXML
     private void onCopy() {
         if (lastResult == null) return;
         TableRenderer.copyToClipboard(tableResult);
         labelActionStatus.setText("✓ Скопійовано у буфер обміну (TSV).");
-        log.info("UI → Таблицю скопійовано у буфер.");
     }
 
-    /**
-     * Зберігає повну матрицю MA у CSV через FileChooser.
-     * Зберігається ПОВНА матриця (не лише відображувані рядки).
-     */
     @FXML
     private void onSaveCsv() {
         if (lastResult == null || lastResult.getResultMA() == null) return;
-
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Зберегти матрицю MA");
         chooser.setInitialFileName(String.format("MA_PRG%d_N%d.csv",
                 lastResult.getPrgNumber(), lastResult.getN()));
         chooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("CSV файли (*.csv)", "*.csv"));
-
         File file = chooser.showSaveDialog(btnSaveCsv.getScene().getWindow());
         if (file == null) return;
-
         try {
             MatrixFileService.saveMatrix(lastResult.getResultMA(), file.toPath());
-            String size = MatrixFileService.humanFileSize(file.toPath());
-            labelActionStatus.setText("✓ Збережено: " + file.getName() + " (" + size + ")");
-            log.info("UI → Матрицю збережено: " + file.getAbsolutePath());
+            labelActionStatus.setText("✓ Збережено: " + file.getName()
+                    + " (" + MatrixFileService.humanFileSize(file.toPath()) + ")");
         } catch (IOException e) {
-            log.error("UI → Помилка збереження: " + e.getMessage());
             showError("Помилка збереження", e.getMessage());
         }
     }
@@ -262,32 +280,22 @@ public class ComputeTabController implements Initializable {
         return 1;
     }
 
-    private AbstractPRG buildPrg(int n, int N, int P) {
-        return switch (n) {
-            case 2  -> new PRG2(N, P);
-            case 3  -> new PRG3(N, P);
-            default -> new PRG1(N, P);
-        };
-    }
-
     private void commitSpinners() {
-        String textN = spinnerN.getEditor().getText().trim();
-        String textP = spinnerP.getEditor().getText().trim();
-        if (!textN.isEmpty())
-            spinnerN.getValueFactory().setValue(Integer.parseInt(textN));
-        if (!textP.isEmpty())
-            spinnerP.getValueFactory().setValue(Integer.parseInt(textP));
+        String tN = spinnerN.getEditor().getText().trim();
+        String tP = spinnerP.getEditor().getText().trim();
+        if (!tN.isEmpty()) spinnerN.getValueFactory().setValue(Integer.parseInt(tN));
+        if (!tP.isEmpty()) spinnerP.getValueFactory().setValue(Integer.parseInt(tP));
     }
 
     private TextFormatter<Integer> intOnlyFormatter() {
-        return new TextFormatter<>(change ->
-                change.getControlNewText().matches("\\d*") ? change : null);
+        return new TextFormatter<>(ch ->
+                ch.getControlNewText().matches("\\d*") ? ch : null);
     }
 
-    private void setActionButtonsEnabled(boolean enabled) {
-        btnCopy.setDisable(!enabled);
-        btnSaveCsv.setDisable(!enabled);
-        if (!enabled) labelActionStatus.setText("");
+    private void setActionButtonsEnabled(boolean on) {
+        btnCopy.setDisable(!on);
+        btnSaveCsv.setDisable(!on);
+        if (!on) labelActionStatus.setText("");
     }
 
     private void showError(String header, String msg) {
